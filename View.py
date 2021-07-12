@@ -56,6 +56,11 @@ player8_data_of_birth = input("Please Enter Player 8 Date of Birth")
 player8_gender = input("Please Enter Player 8 Gender")
 player8_ranking = input("Please Enter Player 8 Ranking")
 """
+class Menu:
+    def __init__(self, line1, line2, line3):
+        self.line1 = line1
+        self.line2 = line2
+        self.line3 = line3
 # Player 1
 player1_first_name = "Francois"
 player1_last_name = "Durand"
