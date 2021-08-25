@@ -1,6 +1,5 @@
 class Match:
 
-    def __init__(self, resultat, date, heure):
+    def __init__(self, resultat):
         self.resultat = resultat
-        self.date = date
-        self.heure = heure
+
