@@ -39,8 +39,8 @@ class View:
         print("Joueurs par Ordre Alphabetique.....................entrez 1 : ")
         print("Joueurs par Classement.............................entrez 2 : ")
         print("Joueurs d'un Tournoi par Ordre Alphabetique........entrez 3 : ")
-        print("Joueurs d'un Tournoi par classement................entrez 4 : ")
-        print("Liste de tous les Tournois.........................entrez 5 : ")
+        print("Joueurs d'un Tournoi par Classement................entrez 4 : ")
+        print("Liste de Tous les Tournois.........................entrez 5 : ")
         print("Liste des Tours d'un Tournoi.......................entrez 6 : ")
         print("Liste des Matchs d'un Tournoi......................entrez 7 : ")
         print("Revenir Menu Principal.............................entrez 8 : ")
@@ -71,16 +71,11 @@ class View:
         date_debut = input("Entrez la date du debut du tournoi : ")
         date_fin = input("Entrez la date de fin du tournoi : ")
         nombre_de_tours = 4
-
-        #tournee = input("Entrez la tournee : ")
-        #joueurs_tournois = input("Entrez les indices des joueurs : ")
         controle_du_temps = input("Entrez le controle du temps : ")
         description_tournoi = input("Entrez une description pour le tournoi : ")
-        flag = 'En Cours'
         tournoi = [nom_tournoi, lieu_du_tournoi, date_debut, date_fin, nombre_de_tours,
                    controle_du_temps, description_tournoi
                    ]
-
         return tournoi
 
     def prompt_joueur_tournoi(self, i):
@@ -101,3 +96,12 @@ class View:
     def prompt_choisir_tour(self):
         num_tour = input("Entrez l'indice du tour : ")
         return num_tour
+
+    def prompt_alerte_joueurs(self):
+        print("pas assez de joueurs pour creer un tournoi")
+
+    def prompt_alerte_saisie_tour(self):
+        print("Vous ne pouvez Entrer de Resultats Que Pour Le Dernier Tour En Cours")
+
+    def affichage_generique(self, data):
+        print(data)
