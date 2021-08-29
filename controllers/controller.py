@@ -23,6 +23,9 @@ class Controller:
         self.table_joueurs = db.table("joueurs")
         self.table_tournois = db.table("tournois")
 
+
+
+
     def nombre_de_joueurs_db(self):
         nb_joueurs = 0
         for joueur in self.table_joueurs:
@@ -208,7 +211,7 @@ class Controller:
             if str(joueur.doc_id) not in joueurs_tournoi:
                 results = str(joueur.doc_id) + " : " + joueur["prenom"].capitalize() + " " + \
                           joueur["nom"].upper() + " (" + joueur["classement"] + ")"
-                print(results)
+                self.view.affichage_generique(results)
 
     def update_joueur_classement(self):
         db = TinyDB('db.json')
@@ -220,8 +223,7 @@ class Controller:
         for joueur in table_joueurs:
             if str(joueur.doc_id) == joueur_id:
                 table_joueurs.update({"classement": nouveau_classement}, doc_ids=[joueur.doc_id])
-                # a gerer par la vue
-                print("Changement effectué avec succès")
+                self.view.prompt_modification_succes()
 
     def creer_tournoi(self):
         if self.nombre_de_joueurs_db() >= 8:
@@ -356,10 +358,29 @@ class Controller:
                             score_joueur += match['resultat'][0][1]
         return score_joueur
 
+    def joueur_a_deja_joue_contre(self, id_joueur, id_adversaire, id_tournoi):
+        tournoi = self.table_tournois.get(doc_id=int(id_tournoi))
+        tours = tournoi['tours']
+        matchs = []
+        reponse = False
+        for tour in tours:
+            matchs_tournoi = tour['tour_matchs']
+            for match in matchs_tournoi:
+                matchs.append(match)
+
+        for match in matchs:
+            if str(id_joueur) == str(match['resultat'][0][0]) or str(id_joueur) == str(match['resultat'][1][0]):
+                if str(id_adversaire) == match['resultat'][1][0] or str(id_joueur) == str(match['resultat'][1][0]) :
+                    reponse = True
+
+                return reponse
+
     def generation_paires(self, num_tour, id_tournoi):
         '''pour limiter le code mettre get_joueurs dans get_tournoi'''
         tournoi = self.get_tournoi(id_tournoi)
         tournoi.joueurs = self.get_joueurs(tournoi.joueurs)
+
+
         if str(num_tour) == "1":
             horodatage_debut_tour = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             self.ranked_joueurs = sorted(tournoi.joueurs, key=lambda x: x.classement, reverse=True)
@@ -379,12 +400,6 @@ class Controller:
 
                 self.matchs_tour.append(match)
                 i += 1
-
-            # Serialisation des Matchs
-            serialized_matchs = []
-            for match in self.matchs_tour:
-                serialized_match = self.serialize_match(match)
-                serialized_matchs.append(serialized_match)
 
             # Enregistrement Objet Tour
             nom_tour = "Tour " + str(num_tour)
@@ -425,11 +440,14 @@ class Controller:
             self.ranked_joueurs = sorted(tournoi.joueurs, key=lambda x: (x.score_tournoi, x.classement), reverse=True)
             nb_joueurs = len(self.ranked_joueurs)
 
+
             i = 0
+            self.matchs_tour = []
             while 2 * i < nb_joueurs:
                 # Generation de la liste des matchs dans matchs_tour
                 index1 = i
                 index2 = (i + 1)
+
                 resultat = self.view.prompt_resultat_match(self.ranked_joueurs[index1],
                                                            self.ranked_joueurs[index2])
 
@@ -439,11 +457,6 @@ class Controller:
                 self.matchs_tour.append(match)
                 i += 1
 
-            # Serialisation des Matchs
-            serialized_matchs = []
-            for match in self.matchs_tour:
-                serialized_match = self.serialize_match(match)
-                serialized_matchs.append(serialized_match)
 
             # Enregistrement Objet Tour
             nom_tour = "Tour " + str(num_tour)
@@ -561,7 +574,7 @@ class Controller:
                       joueur.prenom + " " + \
                       str(joueur.date_de_naissance) + " " + \
                       joueur.sexe
-            print(results)
+            self.view.affichage_generique(results)
 
     def afficher_tours_tournoi(self, id_tournoi):
         for tournoi_in_table in self.table_tournois:

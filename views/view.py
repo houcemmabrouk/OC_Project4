@@ -103,5 +103,8 @@ class View:
     def prompt_alerte_saisie_tour(self):
         print("Vous ne pouvez Entrer de Resultats Que Pour Le Dernier Tour En Cours")
 
+    def prompt_modification_succes(self):
+        print("Changement effectué avec succès")
+
     def affichage_generique(self, data):
         print(data)
