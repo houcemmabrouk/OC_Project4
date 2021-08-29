@@ -1,6 +1,7 @@
 class Tour:
 
-    def __init__(self, nom_tour, date_debut, date_fin, tour_matchs, flag, id_tournoi):
+    def __init__(self,num_tour, nom_tour, date_debut, date_fin, tour_matchs, flag, id_tournoi):
+        self.num_tour = num_tour
         self.nom_tour = nom_tour
         self.date_debut = date_debut
         self.date_fin = date_fin

@@ -1,20 +1,19 @@
 from datetime import datetime
-from tinydb import TinyDB, Query, where
-import pprint
+from tinydb import TinyDB, Query
 from typing import List
 from models.joueur import Joueur
 from models.tournoi import Tournoi
 from models.match import Match
 from models.tour import Tour
 
+
 class Controller:
-
-
     db = TinyDB('db.json')
 
     table_joueurs = db.table("joueurs")
     table_tournois = db.table("tournois")
 
+    #table_tournois.truncate()
 
     def __init__(self, view):
         self.view = view
@@ -27,13 +26,12 @@ class Controller:
         self.table_joueurs = db.table("joueurs")
         self.table_tournois = db.table("tournois")
 
-
-
-    def effacer_tous_joueurs(self):
-        self.table_tournois.truncate()
-
-    def effacer_tous_tournois(self):
-        self.table_joueurs.truncate()
+    def nombre_de_joueurs_db(self):
+        nb_joueurs = 0
+        for joueur in self.table_joueurs:
+            if joueur.doc_id != None:
+                nb_joueurs += 1
+        return nb_joueurs
 
     def set_joueur(self):
 
@@ -41,15 +39,14 @@ class Controller:
         joueur = Joueur(joueur_info[0], joueur_info[1], joueur_info[2],
                         joueur_info[3], joueur_info[4], 0)
         serialized_joueur = {
-            'nom': joueur.nom,
-            'prenom': joueur.prenom,
+            'nom': joueur.nom.upper(),
+            'prenom': joueur.prenom.capitalize(),
             'date_de_naissance': joueur.date_de_naissance,
             'sexe': joueur.sexe,
             'classement': joueur.classement,
             'score_tournoi': joueur.score_tournoi
-                           }
+        }
         self.table_joueurs.insert(serialized_joueur)
-        pprint.pprint(self.table_joueurs.all())
         return joueur
 
     def get_joueurs_ids(self, joueurs):
@@ -61,24 +58,24 @@ class Controller:
 
     def serialize_joueur(self, joueur):
         serialized_joueur = {
-                            'nom': joueur.nom,
-                            'prenom': joueur.prenom,
-                            'date_de_naissance': joueur.date_de_naissance,
-                            'sexe': joueur.sexe,
-                            'classement': joueur.classement,
-                            'score_tournoi': joueur.score_tournoi
-                            }
+            'nom': joueur.nom,
+            'prenom': joueur.prenom,
+            'date_de_naissance': joueur.date_de_naissance,
+            'sexe': joueur.sexe,
+            'classement': joueur.classement,
+            'score_tournoi': joueur.score_tournoi
+        }
         return serialized_joueur
 
     def deserialize_joueur(self, serialized_joueur):
         joueur = Joueur(
-                        nom=serialized_joueur['nom'],
-                        prenom=serialized_joueur['prenom'],
-                        date_de_naissance=serialized_joueur['date_de_naissance'],
-                        sexe=serialized_joueur['sexe'],
-                        classement=serialized_joueur['classement'],
-                        score_tournoi=serialized_joueur['score_tournoi']
-                        )
+            nom=serialized_joueur['nom'],
+            prenom=serialized_joueur['prenom'],
+            date_de_naissance=serialized_joueur['date_de_naissance'],
+            sexe=serialized_joueur['sexe'],
+            classement=serialized_joueur['classement'],
+            score_tournoi=serialized_joueur['score_tournoi']
+        )
         return joueur
 
     def serialize_match(self, match):
@@ -105,13 +102,14 @@ class Controller:
             tour_match = self.serialize_match(match)
             tour_matchs.append(tour_match)
 
-        serialized_tour = {
-                            'nom_tour': tour.nom_tour,
-                            'date_debut': tour.date_debut,
-                            'date_fin': tour.date_fin,
-                            'tour_matchs': tour_matchs,
-                            'id_tournoi': tour.id_tournoi,
-                            }
+        serialized_tour = {'num_tour': tour.num_tour,
+                           'nom_tour': tour.nom_tour,
+                           'date_debut': tour.date_debut,
+                           'date_fin': tour.date_fin,
+                           'tour_matchs': tour_matchs,
+                           'flag': tour.flag,
+                           'id_tournoi': tour.id_tournoi,
+                           }
         return serialized_tour
 
     def deserialize_tour(self, serialized_tour):
@@ -121,36 +119,55 @@ class Controller:
             tour_matchs.append(deserialized_match)
 
         tour = Tour(
-                    nom_tour=serialized_tour['nom'],
-                    date_debut=serialized_tour['date_debut'],
-                    date_fin=serialized_tour['date_fin'],
-                    tour_matchs=serialized_tour['tour_matchs'],
-                    flag=serialized_tour['flag'],
-                    id_tournoi=serialized_tour['id_tournoi']
-                    )
+            num_tour=serialized_tour['num_tour'],
+            nom_tour=serialized_tour['nom'],
+            date_debut=serialized_tour['date_debut'],
+            date_fin=serialized_tour['date_fin'],
+            tour_matchs=serialized_tour['tour_matchs'],
+            flag=serialized_tour['flag'],
+            id_tournoi=serialized_tour['id_tournoi']
+        )
         return tour
 
     def serialize_tournoi(self, tournoi):
+        serialized_tours = []
+        for tour in tournoi.tours:
+            serialized_tour = self.serialize_tour(tour)
+            serialized_tours.append(serialized_tour)
+
         serialized_tournoi = {
-                            'nom_tournoi': tournoi.nom_tournoi,
-                            'lieu': tournoi.lieu,
-                            'date_debut': tournoi.date_debut,
-                            'date_fin': tournoi.date_fin,
-                            'nombre_tours': tournoi.nombre_tours,
-                            'joueurs': self.get_joueurs_ids(tournoi.joueurs),
-                            'controle_du_temps': tournoi.controle_du_temps,
-                            'description': tournoi.description,
-                            'tours': tournoi.tours,
-                            'flag': tournoi.flag
-                            }
+            'nom_tournoi': tournoi.nom_tournoi,
+            'lieu': tournoi.lieu,
+            'date_debut': tournoi.date_debut,
+            'date_fin': tournoi.date_fin,
+            'nombre_tours': tournoi.nombre_tours,
+            'joueurs': self.get_joueurs_ids(tournoi.joueurs),
+            'controle_du_temps': tournoi.controle_du_temps,
+            'description': tournoi.description,
+            'tours': serialized_tours,
+            'flag': tournoi.flag
+        }
         return serialized_tournoi
+
+    def deserialize_tournoi(self, serialized_tournoi):
+        tournoi = Tournoi(
+            nom_tournoi=serialized_tournoi['nom_tournoi'],
+            lieu=serialized_tournoi['lieu'],
+            date_debut=serialized_tournoi['date_debut'],
+            date_fin=serialized_tournoi['date_fin'],
+            nombre_tours=serialized_tournoi['nombre_tours'],
+            joueurs=serialized_tournoi['joueurs'],
+            controle_du_temps=serialized_tournoi['controle_du_temps'],
+            description=serialized_tournoi['description'],
+            tours=serialized_tournoi['tours'],
+            flag=serialized_tournoi['flag']
+        )
+        return tournoi
 
     def get_joueur_id(self, joueur):
         User = Query()
         serialized_joueur = self.serialize_joueur(joueur)
-        print(serialized_joueur['nom'])
         documents = self.table_joueurs.search(User.nom == str(serialized_joueur['nom']))
-        print(documents)
         id_joueur = None
         for document in documents:
             id_joueur = document.doc_id
@@ -162,13 +179,13 @@ class Controller:
             for joueur in self.table_joueurs:
                 if str(id_joueur) == str(joueur.doc_id):
                     joueur = Joueur(
-                                    joueur['nom'],
-                                    joueur['prenom'],
-                                    joueur['date_de_naissance'],
-                                    joueur['sexe'],
-                                    joueur['classement'],
-                                    joueur['score_tournoi']
-                                    )
+                        joueur['nom'],
+                        joueur['prenom'],
+                        joueur['date_de_naissance'],
+                        joueur['sexe'],
+                        joueur['classement'],
+                        joueur['score_tournoi']
+                    )
                     joueurs.append(joueur)
         return joueurs
 
@@ -176,26 +193,24 @@ class Controller:
         for joueur_in_table in self.table_joueurs:
             if str(id_joueur) == str(joueur_in_table.doc_id):
                 joueur = Joueur(
-                                joueur_in_table['nom'],
-                                joueur_in_table['prenom'],
-                                joueur_in_table['date_de_naissance'],
-                                joueur_in_table['sexe'],
-                                joueur_in_table['classement'],
-                                joueur_in_table['score_tournoi']
-                                )
+                    joueur_in_table['nom'],
+                    joueur_in_table['prenom'],
+                    joueur_in_table['date_de_naissance'],
+                    joueur_in_table['sexe'],
+                    joueur_in_table['classement'],
+                    joueur_in_table['score_tournoi']
+                )
 
         return joueur
-    # a mettre dans la vue
-    # sauf ecriture base de données
+
     def afficher_joueurs(self, joueurs_tournoi):
         db = TinyDB('db.json')
         table_joueurs = db.table("joueurs")
         User = Query()
-        print("Liste des Joueurs")
         for joueur in table_joueurs:
             if str(joueur.doc_id) not in joueurs_tournoi:
-                results = str(joueur.doc_id) + " : " + joueur["prenom"] + " " + \
-                          joueur["nom"] + " (" + joueur["classement"] + ")"
+                results = str(joueur.doc_id) + " : " + joueur["prenom"].capitalize() + " " + \
+                          joueur["nom"].upper() + " (" + joueur["classement"] + ")"
                 print(results)
 
     def update_joueur_classement(self):
@@ -212,50 +227,48 @@ class Controller:
                 print("Changement effectué avec succès")
 
     def creer_tournoi(self):
-        db = TinyDB('db.json')
-        table_joueurs = db.table("joueurs")
-        User = Query()
-        tournoi_info = self.view.prompt_tournoi()
-        joueurs_tournoi = []
-        i = 1
-        while i < 9:
-            self.afficher_joueurs(joueurs_tournoi)
-            indice = self.view.prompt_joueur_tournoi(i)
-            if self.verifier_indice(indice) == True and indice not in joueurs_tournoi:
-                i += 1
-                serialized_joueur = self.recuperer_joueur(indice)
-                joueur = Joueur(
-                    serialized_joueur['nom'],
-                    serialized_joueur['prenom'],
-                    serialized_joueur['date_de_naissance'],
-                    serialized_joueur['sexe'],
-                    serialized_joueur['classement'],
-                    serialized_joueur['score_tournoi']
+        if self.nombre_de_joueurs_db() >= 8:
+            tournoi_info = self.view.prompt_tournoi()
+            joueurs_tournoi = []
+            i = 1
+            while i < 9:
+                self.afficher_joueurs(joueurs_tournoi)
+                id_joueur = self.view.prompt_joueur_tournoi(i)
+                if self.verifier_indice(id_joueur) == True and id_joueur not in joueurs_tournoi:
+                    i += 1
+                    joueur = self.get_joueur(id_joueur)
+                    self.joueurs.append(joueur)
+                    joueurs_tournoi.append(id_joueur)
+
+            ''' Creation du premier tour'''
+            tournoi_tours = []
+            premier_tour = Tour("1", "Tour 1", None, None, [], "En Cours", None)
+            tournoi_tours.append(premier_tour)
+            '''Creation de l'objet tournoi'''
+            tournoi = Tournoi(tournoi_info[0], tournoi_info[1], tournoi_info[2], tournoi_info[3],
+                              tournoi_info[4], tournoi_info[5], tournoi_info[6],
+                              self.joueurs, tournoi_tours, flag="En Cours"
                               )
-                self.joueurs.append(joueur)
-                joueurs_tournoi.append(indice)
+            '''Serialisation et sauvegarde du tournoi dans la base de donnée'''
+            serialized_tournoi = self.serialize_tournoi(tournoi)
+            self.table_tournois.insert(serialized_tournoi)
+        else:
+            print("pas assez de joueurs pour creer un tournoi")
 
+    def translate_resultat(self, entry):
+        score1 = 0
+        score2 = 0
+        if entry == str(1):
+            score1 = 1
+            score2 = 0
+        elif entry == str(2):
+            score1 = 0
+            score2 = 1
+        elif entry == "x":
+            score1 = 0.5
+            score2 = 0.5
 
-        '''Creation du tournoi'''
-        tournoi = Tournoi(tournoi_info[0], tournoi_info[1], tournoi_info[2], tournoi_info[3],
-                          tournoi_info[4], tournoi_info[5], tournoi_info[6], self.joueurs, self.tours, flag="En Cours"
-                          )
-        serialized_tournoi = {
-                            'nom_tournoi': tournoi.nom_tournoi,
-                            'lieu': tournoi.lieu,
-                            'date_debut': tournoi.date_debut,
-                            'date_fin': tournoi.date_fin,
-                            'nombre_tours': tournoi.nombre_tours,
-                            'joueurs': joueurs_tournoi,
-                            'controle_du_temps': tournoi.controle_du_temps,
-                            'description': tournoi.description,
-                            'tours': self.tours,
-                            'flag': tournoi.flag
-                            }
-        self.table_tournois.insert(serialized_tournoi)
-        pprint.pprint(self.table_tournois.all())
-        '''Creation du premier Tour'''
-        self.generation_paires(1, tournoi)
+        return [score1, score2]
 
     def get_tournoi(self, id_tournoi):
         for tournoi_in_table in self.table_tournois:
@@ -273,9 +286,18 @@ class Controller:
                                   )
                 return tournoi
 
-    def recuperer_joueur(self, indice):
+    def get_tours(self, id_tournoi):
+        all_tours = []
+        for tournoi_in_table in self.table_tournois:
+            if str(id_tournoi) == str(tournoi_in_table.doc_id):
+                tours = tournoi_in_table['tours']
+                for tour in tours:
+                    all_tours.append(tour)
+            return all_tours
+
+    def recuperer_joueur(self, id_joueur):
         for joueur in self.table_joueurs:
-            if str(joueur.doc_id) == indice:
+            if str(joueur.doc_id) == id_joueur:
                 return joueur
 
     def verifier_indice(self, indice):
@@ -287,170 +309,300 @@ class Controller:
                 return True
 
     def afficher_liste_tournois(self):
-        db = TinyDB('db.json')
-        table_tournois = db.table("tournois")
-        User = Query()
-        # a gerer par la vue
-        print("Liste Des Tournois")
-
-        for tournoi in table_tournois:
+        for tournoi in self.table_tournois:
             results = str(tournoi.doc_id) + " : " + tournoi["nom_tournoi"] + " " + \
-                      tournoi["lieu"] + " (" + tournoi["date_debut"] + ")"
+                      tournoi["lieu"] + " (" + tournoi["date_debut"] + ")"  + " " + tournoi["flag"]
             print(results)
 
+    def get_flag_tour(self, num_tour, id_tournoi):
+        flag = "Not Found"
+        for tournoi_in_table in self.table_tournois:
+            if str(tournoi_in_table.doc_id) == str(id_tournoi):
+                tours_in_table = tournoi_in_table['tours']
+                for tour_in_table in tours_in_table:
+                    if tour_in_table['num_tour'] == str(num_tour):
+                        flag = tour_in_table['flag']
+                        return flag
+
+    def dernier_tour_tournoi(self, id_tournoi):
+        i = 0
+        dernier_tour = 1
+        for tournoi_in_table in self.table_tournois:
+            if str(tournoi_in_table.doc_id) == id_tournoi:
+                tours = tournoi_in_table['tours']
+                for tour in tours:
+                    i += 1
+                    dernier_tour = i
+        return dernier_tour
+
+    def saisir_resultat(self):
+        self.afficher_liste_tournois()
+        id_tournoi = self.view.prompt_choisir_tournoi()
+        self.afficher_tours_tournoi(id_tournoi)
+        dernier_tour = self.dernier_tour_tournoi(id_tournoi)
+        num_tour = self.view.prompt_choisir_tour()
+        if num_tour == str(dernier_tour) and self.get_flag_tour(num_tour, id_tournoi) == "En Cours":
+            self.generation_paires(num_tour, id_tournoi)
+        else:
+            print("Vous ne pouvez Entrer de Resultats Que Pour Le Dernier Tour En Cours")
+            self.afficher_sous_menu("2")
+
+    def score_cumule_joueur(self, id_joueur, id_tournoi):
+        score_joueur = 0.0
+        for tournoi_in_table in self.table_tournois:
+            if str(id_tournoi) == str(tournoi_in_table.doc_id):
+                tours = tournoi_in_table['tours']
+                for tour in tours:
+                    matchs = tour['tour_matchs']
+                    for match in matchs:
+                        if str(match['resultat'][0][0]) == id_joueur:
+                            score_joueur += match['resultat'][0][1]
+                        if match['resultat'][1][0] == id_joueur:
+                            score_joueur += match['resultat'][0][1]
+        return score_joueur
+
     def generation_paires(self, num_tour, id_tournoi):
-
-
-        tournoi = self.get_tournoi(int(id_tournoi))
+        '''pour limiter le code mettre get_joueurs dans get_tournoi'''
+        tournoi = self.get_tournoi(id_tournoi)
         tournoi.joueurs = self.get_joueurs(tournoi.joueurs)
-        print(tournoi.joueurs)
-        print(self.get_joueurs(tournoi.joueurs))
-        if num_tour == 1:
+        if str(num_tour) == "1":
+            horodatage_debut_tour = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             self.ranked_joueurs = sorted(tournoi.joueurs, key=lambda x: x.classement, reverse=True)
             nb_joueurs = len(self.ranked_joueurs)
-
-            horodatage_debut_tour = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-
-
             i = 0
-            while 2*i < nb_joueurs:
-                score1 = 0
-                score2 = 0
+            while 2 * i < nb_joueurs:
+                # Generation de la liste des matchs dans matchs_tour
                 index1 = i
-                index2 = (i + int(nb_joueurs/2))
+                index2 = (i + int(nb_joueurs / 2))
                 resultat = self.view.prompt_resultat_match(self.ranked_joueurs[index1],
                                                            self.ranked_joueurs[index2])
 
-                if resultat == str(1):
-                    score1 = 1
-                    score2 = 0
-                elif resultat == str(2):
-                    score1 = 0
-                    score2 = 1
-                elif resultat == "x":
-                    score1 = 0.5
-                    score2 = 0.5
+                joueur_blanc = [self.ranked_joueurs[index1], self.translate_resultat(resultat)[0]]
+                joueur_noir = [self.ranked_joueurs[index2], self.translate_resultat(resultat)[1]]
 
-                joueur_blanc = [self.ranked_joueurs[index1], score1]
-                joueur_noir = [self.ranked_joueurs[index2], score2]
-
-                '''reprendre ici
-                self.ranked_joueurs[index1].'''
-
-
-
-                #horodatage_match = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
                 match = Match(resultat=(joueur_blanc, joueur_noir))
+
                 self.matchs_tour.append(match)
                 i += 1
 
+            # Serialisation des Matchs
+            serialized_matchs = []
             for match in self.matchs_tour:
-                for joueur in tournoi.joueurs:
-                    if joueur == match.resultat[0][0]:
-                        joueur.score_tournoi = match.resultat[0][1]
-            for match in self.matchs_tour:
-                for joueur in tournoi.joueurs:
-                    if joueur == match.resultat[1][0]:
-                        joueur.score_tournoi = match.resultat[1][1]
+                serialized_match = self.serialize_match(match)
+                serialized_matchs.append(serialized_match)
 
-            for joueur in tournoi.joueurs:
-                print(joueur.score_tournoi)
+            # Enregistrement Objet Tour
+            nom_tour = "Tour " + str(num_tour)
+            horodatage_fin_tour = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+            tour = Tour(str(num_tour), nom_tour, horodatage_debut_tour, horodatage_fin_tour, self.matchs_tour,
+                        "Termine", id_tournoi)
 
-            nom_tour ="tour " + str(num_tour)
-
-            '''enregistrement tour'''
-            tour = Tour(nom_tour, horodatage_debut_tour, None, self.matchs_tour, "Terminé", id_tournoi)
-            tours_tournoi = []
-            tours_tournoi.append(tour)
-            tournoi.tours = tours_tournoi
-
-
-
-
-            serialized_tour = {
-                                'nom_tour': tour.nom_tour,
-                                'date_debut': tour.date_debut,
-                                'date_fin': tour.date_fin,
-                                'tour_matchs': tour.tour_matchs,
-                                'id_tournoi': tour.id_tournoi,
-                                }
-
-
-
-
+            # Serialisation du Tour
+            serialized_tours = []
+            serialized_tour = self.serialize_tour(tour)
+            serialized_tours.append(serialized_tour)
+            # Mise à Jour de Tour dans le Tournoi
             for tournoi_in_table in self.table_tournois:
                 if str(tournoi_in_table.doc_id) == str(id_tournoi):
-                    self.table_tournois.update({"tours": tours_tournoi},
+                    self.table_tournois.update({"tours": serialized_tours},
                                                doc_ids=[tournoi_in_table.doc_id])
 
+            # Generation du Tour Suivant
+            num_tour_suivant = str(int(num_tour) + 1)
+            nom_tour_suivant = "Tour " + str(num_tour_suivant)
+            tour_suivant = Tour(num_tour_suivant, nom_tour_suivant, None, None, [], "En Cours", None)
+            serialized_tour_suivant = self.serialize_tour(tour_suivant)
+            serialized_tours = self.get_tours(id_tournoi)
+            serialized_tours.append(serialized_tour_suivant)
+            # Mise à Jour de Tour dans le Tournoi
+            for tournoi_in_table in self.table_tournois:
+                if str(tournoi_in_table.doc_id) == str(id_tournoi):
+                    self.table_tournois.update({"tours": serialized_tours},
+                                               doc_ids=[tournoi_in_table.doc_id])
 
-            for match in tour.tour_matchs:
-                print(match.resultat[0] + match.resultat[1])
-
-
-        elif num_tour > 1 and num_tour <= int(tournoi.nombre_tours):
-            ranked_joueurs = sorted(tournoi.joueurs, key=lambda x: (x.score_tournoi, x.ranking), reverse=True)
-
-            nb_joueurs = len(ranked_joueurs)
+        if int(num_tour) > 1 and int(num_tour) <= 4:
+            # Ecriture des score cumules
+            for joueur in tournoi.joueurs:
+                id_joueur = self.get_joueur_id(joueur)
+                joueur.score_tournoi = self.score_cumule_joueur(id_joueur, id_tournoi)
 
             horodatage_debut_tour = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+            self.ranked_joueurs = sorted(tournoi.joueurs, key=lambda x: (x.score_tournoi, x.classement), reverse=True)
+            nb_joueurs = len(self.ranked_joueurs)
 
             i = 0
             while 2 * i < nb_joueurs:
-                score1 = 0
-                score2 = 0
+                # Generation de la liste des matchs dans matchs_tour
                 index1 = i
                 index2 = (i + 1)
-                resultat = self.view.prompt_resultat_match(ranked_joueurs[index1],
-                                                           ranked_joueurs[index2])
-                print(resultat)
-                if resultat == str(1):
-                    score1 = 1
-                    score2 = 0
-                elif resultat == str(2):
-                    score1 = 0
-                    score2 = 1
-                elif resultat == "x":
-                    score1 = 0.5
-                    score2 = 0.5
 
-                joueur_blanc = [ranked_joueurs[index1], score1]
-                joueur_noir = [ranked_joueurs[index2], score2]
-                horodatage_match = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                resultat = self.view.prompt_resultat_match(self.ranked_joueurs[index1],
+                                                           self.ranked_joueurs[index2])
+
+                joueur_blanc = [self.ranked_joueurs[index1], self.translate_resultat(resultat)[0]]
+                joueur_noir = [self.ranked_joueurs[index2], self.translate_resultat(resultat)[1]]
+
                 match = Match(resultat=(joueur_blanc, joueur_noir))
 
-                print(match.resultat)
-                print(match.horodatage)
-
                 self.matchs_tour.append(match)
-
                 i += 1
-                print(i)
 
-            nom_tour = "tour" + str(num_tour)
+            # Serialisation des Matchs
+            serialized_matchs = []
+            for match in self.matchs_tour:
+                serialized_match = self.serialize_match(match)
+                serialized_matchs.append(serialized_match)
 
-            tour = Tour(nom_tour, horodatage_debut_tour, None, self.matchs_tour, "En cours", id_tournoi)
-            self.tours_tournoi.append(tour)
+            # Enregistrement Objet Tour
+            nom_tour = "Tour " + str(num_tour)
+            horodatage_fin_tour = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+            tour = Tour(str(num_tour), nom_tour, horodatage_debut_tour, horodatage_fin_tour, self.matchs_tour,
+                        "Termine", id_tournoi)
 
-    def saisir_resultat(self):
+            # Serialisation du Tour
+            serialized_tours = self.get_tours(id_tournoi)
+            serialized_tours.pop()
+            serialized_tour = self.serialize_tour(tour)
+            serialized_tours.append(serialized_tour)
+
+            # Mise à Jour de Tour dans le Tournoi
+            for tournoi_in_table in self.table_tournois:
+                if str(tournoi_in_table.doc_id) == str(id_tournoi):
+                    self.table_tournois.update({"tours": serialized_tours},
+                                               doc_ids=[tournoi_in_table.doc_id])
+
+            # Generation du Tour Suivant
+            if int(num_tour) < int(tournoi.nombre_tours):
+                num_tour_suivant = str(int(num_tour) + 1)
+                nom_tour_suivant = "Tour " + str(num_tour_suivant)
+                tour_suivant = Tour(num_tour_suivant, nom_tour_suivant, None, None, [], "En Cours", None)
+                serialized_tour_suivant = self.serialize_tour(tour_suivant)
+                serialized_tours = self.get_tours(id_tournoi)
+                serialized_tours.append(serialized_tour_suivant)
+
+                # Mise à Jour de Tour dans le Tournoi
+                for tournoi_in_table in self.table_tournois:
+                    if str(tournoi_in_table.doc_id) == str(id_tournoi):
+                        self.table_tournois.update({"tours": serialized_tours},
+                                                   doc_ids=[tournoi_in_table.doc_id])
+            # Flag Tournoi Termine
+            if int(num_tour) == int(tournoi.nombre_tours):
+                # Flag Tournoi Termine
+                for tournoi_in_table in self.table_tournois:
+                    if str(tournoi_in_table.doc_id) == str(id_tournoi):
+                        self.table_tournois.update({'flag': 'Termine'},
+                                                   doc_ids=[tournoi_in_table.doc_id])
+
+    def afficher_joueurs_alphabetique(self):
         db = TinyDB('db.json')
-        table_tournois = db.table("tournois")
         User = Query()
+
+        results_table = []
+        print("Liste des Joueurs")
+        joueurs = []
+        for joueur_in_table in self.table_joueurs:
+            joueur = self.deserialize_joueur(joueur_in_table)
+            joueurs.append(joueur)
+
+        joueurs = sorted(joueurs, key=lambda x: x.nom, reverse=False)
+        i = 0
+        for joueur in joueurs:
+            i += 1
+            results = str(i) + " : " + joueur.nom.upper() + " " + \
+                      joueur.prenom.capitalize() + " " + \
+                      str(joueur.date_de_naissance) + " " + \
+                      joueur.sexe + " " + \
+                      str(joueur.classement)
+            print(results)
+
+    def afficher_joueurs_classement(self):
+        db = TinyDB('db.json')
+        User = Query()
+
+        results_table = []
+        print("Liste des Joueurs")
+        joueurs = []
+        for joueur_in_table in self.table_joueurs:
+            joueur = self.deserialize_joueur(joueur_in_table)
+            joueurs.append(joueur)
+
+        joueurs = sorted(joueurs, key=lambda x: x.classement, reverse=True)
+        i = 0
+        for joueur in joueurs:
+            i += 1
+            results = str(i) + " : (" + str(joueur.classement) + ") " + \
+                      joueur.nom + " " + \
+                      joueur.prenom + " " + \
+                      str(joueur.date_de_naissance) + " " + \
+                      joueur.sexe
+            print(results)
+
+    def afficher_joueurs_tournoi_alphabetique(self):
+        self.afficher_liste_tournois()
+
+        joueurs = []
+        indice_tournoi = self.view.prompt_choisir_tournoi()
+        tournoi = self.table_tournois.get(doc_id=int(indice_tournoi))
+        joueurs_ids = tournoi['joueurs']
+
+        for joueurs_id in joueurs_ids:
+            joueur = self.get_joueur(joueurs_id)
+            joueurs.append(joueur)
+        i = 0
+        joueurs = sorted(joueurs, key=lambda x: x.nom, reverse=False)
+        for joueur in joueurs:
+            i += 1
+            results = str(i) + " : (" + joueur.nom + " " + \
+                      joueur.prenom + " " + \
+                      str(joueur.date_de_naissance) + " " + \
+                      joueur.sexe + " " + \
+                      str(joueur.classement)
+            print(results)
+
+    def afficher_joueurs_tournoi_classement(self):
+        self.afficher_liste_tournois()
+        joueurs = []
+        indice_tournoi = self.view.prompt_choisir_tournoi()
+        tournoi = self.table_tournois.get(doc_id=int(indice_tournoi))
+        joueurs_ids = tournoi['joueurs']
+
+        for joueurs_id in joueurs_ids:
+            joueur = self.get_joueur(joueurs_id)
+            joueurs.append(joueur)
+
+        joueurs = sorted(joueurs, key=lambda x: x.classement, reverse=True)
+        i = 0
+        for joueur in joueurs:
+            i += 1
+            results = str(i) + " : (" + str(joueur.classement) + ") " + \
+                      joueur.nom + " " + \
+                      joueur.prenom + " " + \
+                      str(joueur.date_de_naissance) + " " + \
+                      joueur.sexe
+            print(results)
+
+    def afficher_tours_tournoi(self, id_tournoi):
+        for tournoi_in_table in self.table_tournois:
+            if str(id_tournoi) == str(tournoi_in_table.doc_id):
+                tours = tournoi_in_table['tours']
+                for tour in tours:
+                    results = str(tour['num_tour']) + " : " + tour['nom_tour'] + " " + \
+                              str(tour['date_debut']) + " " + str(tour['date_fin']) + " " + tour['flag']
+                    print(results)
+
+    def afficher_match_tournois(self):
         self.afficher_liste_tournois()
         indice_tournoi = self.view.prompt_choisir_tournoi()
-        i = 0
-
-        for tournoi in table_tournois:
-            if str(tournoi.doc_id) == indice_tournoi:
-                tournoi = self.get_tournoi(indice_tournoi)
-                i += 1
-                dernier_tour = len(tournoi.tours) + 1
-
-
-
-        id_tournoi = indice_tournoi
-        num_tour = dernier_tour
-        self.generation_paires(num_tour, id_tournoi)
+        tournoi = self.table_tournois.get(doc_id=int(indice_tournoi))
+        tour = tournoi['tours']
+        matchs_tournoi = tour['tour_matchs']
+        for match in matchs_tournoi:
+            joueur_blanc = self.get_joueur(match['resultat'][0][0])
+            joueur_noir = self.get_joueur(match['resultat'][1][0])
+            score_blanc = match['resultat'][0][1]
+            score_noir = match['resultat'][1][1]
+            print(joueur_blanc.prenom + " " + joueur_blanc.nom + " " + str(score_blanc) + "     " +
+                  joueur_noir.prenom + " " + joueur_noir.nom + " " + str(score_noir))
 
     def run(self):
         self.afficher_menu_principal()
@@ -467,8 +619,8 @@ class Controller:
             index2 = self.view.show_menu_tournois()
             self.afficher_sous_menu_tournois(index2)
         elif index == str(3):
-            index2 = self.view.show_menu_match()
-            self.afficher_sous_menu_match(index2)
+            index2 = self.view.show_menu_rapports()
+            self.afficher_sous_menu_rapports(index2)
         elif index == str(4):
             self.afficher_menu_principal()
         elif str(index).upper() == "Q":
@@ -483,6 +635,10 @@ class Controller:
             self.afficher_joueurs([])
         elif index == str(4):
             self.afficher_menu_principal()
+        elif index == str(5):
+            id_joueur = "4"
+            id_tournoi = "1"
+            self.score_cumule_joueur(id_joueur, id_tournoi)
         elif str(index).upper() == "Q":
             exit()
         self.afficher_sous_menu("1")
@@ -501,11 +657,25 @@ class Controller:
             exit()
         self.afficher_sous_menu("2")
 
-    def afficher_sous_menu_match(self, index):
+    def afficher_sous_menu_rapports(self, index):
         if index == str(1):
-            self.get_joueurs([1, 2, 3, 4])
+            self.afficher_joueurs_alphabetique()
         elif index == str(2):
+            self.afficher_joueurs_classement()
+        elif index == str(3):
+            self.afficher_joueurs_tournoi_alphabetique()
+        elif index == str(4):
+            self.afficher_joueurs_tournoi_classement()
+        elif index == str(5):
+            self.afficher_liste_tournois()
+        elif index == str(6):
+            self.afficher_liste_tournois()
+            id_tournoi = self.view.prompt_choisir_tournoi()
+            self.afficher_tours_tournoi(id_tournoi)
+        elif index == str(7):
+            self.afficher_match_tournois()
+        elif index == str(8):
             self.afficher_menu_principal()
         elif str(index).upper() == "Q":
             exit()
-
+        self.afficher_sous_menu("3")

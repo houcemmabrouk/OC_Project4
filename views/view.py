@@ -12,7 +12,7 @@ class View:
     def show_menu(self):
         print("Joueurs..........................entrez 1 : ")
         print("Tournois.........................entrez 2 : ")
-        print("Match............................entrez 3 : ")
+        print("Rapports.........................entrez 3 : ")
         print("Quitter..........................entrez Q : ")
         choix = input("Entrez Votre Choix : ")
         return choix
@@ -35,10 +35,16 @@ class View:
         choix = input("Entrez Votre Choix : ")
         return choix
 
-    def show_menu_match(self):
-        print("Reinitialiser les données........entrez 1 : ")
-        print("Revenir Menu Principal...........entrez 2 : ")
-        print("Quitter..........................entrez Q : ")
+    def show_menu_rapports(self):
+        print("Joueurs par Ordre Alphabetique.....................entrez 1 : ")
+        print("Joueurs par Classement.............................entrez 2 : ")
+        print("Joueurs d'un Tournoi par Ordre Alphabetique........entrez 3 : ")
+        print("Joueurs d'un Tournoi par classement................entrez 4 : ")
+        print("Liste de tous les Tournois.........................entrez 5 : ")
+        print("Liste des Tours d'un Tournoi.......................entrez 6 : ")
+        print("Liste des Matchs d'un Tournoi......................entrez 7 : ")
+        print("Revenir Menu Principal.............................entrez 8 : ")
+        print("Quitter............................................entrez Q : ")
         choix = input("Entrez Votre Choix : ")
         return choix
 
@@ -76,7 +82,6 @@ class View:
                    ]
 
         return tournoi
-        # faire une liste d'informations
 
     def prompt_joueur_tournoi(self, i):
         indice = input("Veuillez entrer l'indice du joueur " + str(i) + " : ")
@@ -90,5 +95,9 @@ class View:
         return resultat
 
     def prompt_choisir_tournoi(self):
-        indice_tournoi = input("Entrez l'indice du tournoi pour lequel vous voulez saisir les resultats : ")
+        indice_tournoi = input("Entrez l'indice du tournoi : ")
         return indice_tournoi
+
+    def prompt_choisir_tour(self):
+        num_tour = input("Entrez l'indice du tour : ")
+        return num_tour
