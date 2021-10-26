@@ -11,24 +11,32 @@ Téléchargement du projet
 
 Dans le Terminal executez la commande suivante
 
-    git clone [https://github.com/houcemmabrouk/OC_Projet4.git]
+    git clone [https://github.com/houcemmabrouk/OC_Project4.git]
 
 Installer un environnement virtuel
 
 Dans le Terminal executez les commandes suivantes
 
-    mkdir mon-nouveau-projet-python
-    cd mon-nouveau-projet-python
+    mkdir chess_tournament
+    cd chess_tournament
     python -m venv env
 
 Activer un environnement virtuel
 
-Dans le Terminal executez la commande suivante
+Dans le Terminal executez la commande suivante pour Windows
 
     source env/bin/activate
 
+Dans le Terminal executez la commande suivante pour Linux et MacOS
+
+    source env/scripts/activate
+
 Installer les dependances
 
-Dans le Terminal executez la commande suivante
-
+    Dans le terminal executez la commande suivante
     pip install -r requirements.txt
+
+Lancement du programme
+
+    Dans le terminal allez dans le repertoire /chess_tournament/
+    executez main.py

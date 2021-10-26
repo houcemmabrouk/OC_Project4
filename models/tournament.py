@@ -7,6 +7,7 @@ db = TinyDB('db.json')
 table_tournaments = db.table("tournaments")
 table_players = db.table("players")
 
+
 class Tournament:
 
     def __init__(self, tournament_name, place, start_date, end_date, number_of_rounds, time_control,
@@ -24,10 +25,6 @@ class Tournament:
         self.rounds = rounds
         self.rounds: List[Round] = []
         self.flag = flag
-        db = TinyDB('db.json')
-        self.table_players = db.table("players")
-        self.table_tournaments = db.table("tournaments")
-
 
     def serialize_tournament(self):
         serialized_rounds = []
@@ -45,7 +42,7 @@ class Tournament:
                                  'players': Player.get_players_ids(self.players),
                                  'rounds': serialized_rounds,
                                  'flag': self.flag
-                                }
+                                 }
         return serialized_tournament
 
     def deserialize_tournament_cls(self, serialized_tournament):
@@ -64,11 +61,11 @@ class Tournament:
     deserialize_tournament = classmethod(deserialize_tournament_cls)
 
     def get_tournament_id(self):
-        '''Search for tournament id in the database'''
+        """Search for tournament id in the database"""
         User = Query()
         serialized_tournament = self.serialize_tournament()
-        documents = self.table_tournaments.search(User.tournament_name == str(serialized_tournament['tournament_name'])
-                                                  and User.start_date == str(serialized_tournament['start_date']))
+        documents = table_tournaments.search(User.tournament_name == str(serialized_tournament['tournament_name'])
+                                             and User.start_date == str(serialized_tournament['start_date']))
         id_tournament = None
         for document in documents:
             id_tournament = document.doc_id
@@ -87,7 +84,7 @@ class Tournament:
                                         players=Player.get_players_from_ids(tournament_in_table['players']),
                                         # PROBLEM Round.deserialize_round(tournament_in_table['rounds'])
                                         # PROBLEM rounds=tournament_in_table['rounds']
-                                        rounds=tournament_in_table['rounds'],
+                                        rounds=Round.deserialize_round(tournament_in_table['rounds']),
                                         flag=tournament_in_table['flag']
                                         )
                 return tournament
@@ -109,16 +106,10 @@ class Tournament:
 
     def save(self):
         serialized_tournament = self.serialize_tournament()
-        self.table_tournaments.insert(serialized_tournament)
+        table_tournaments.insert(serialized_tournament)
 
     def add_completed_round(self, completed_round):
         self.rounds.append(completed_round)
 
     def last_round(self):
         print("last round")
-
-
-
-
-
-

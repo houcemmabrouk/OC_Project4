@@ -1,6 +1,6 @@
 from tinydb import TinyDB
 from models.match import Match
-from typing import List
+
 
 db = TinyDB('db.json')
 table_tournaments = db.table("tournaments")
@@ -14,24 +14,21 @@ class Round:
         self.start_date = start_date
         self.end_date = end_date
         self.round_matchs = round_matchs
-        self.round_matchs: List[Match] = []
         self.flag = flag
 
     def serialize_round(self):
-        round_matchs = []
-        for match_in_round in self.round_matchs:
-            round_match = match_in_round.serialize_match()
-            round_matchs.append(round_match)
+        serialized_matchs = []
 
-        print("serialized matchs")
-        print(round_matchs)
+        for match_in_round in self.round_matchs:
+            serialized_match = match_in_round.serialize_match()
+            serialized_matchs.append(serialized_match)
 
         serialized_round = {
                             'round_number': self.round_number,
                             'round_name': self.round_name,
                             'start_date': self.start_date,
                             'end_date': self.end_date,
-                            'round_matchs': round_matchs,
+                            'round_matchs': serialized_matchs,
                             'flag': self.flag,
                             }
         return serialized_round
@@ -52,7 +49,7 @@ class Round:
                       end_date=serialized_round['end_date'],
                       round_matchs=round_matchs,
                       flag=serialized_round['flag']
-                     )
+                      )
         return round
 
     deserialize_round = classmethod(deserialize_round_cls)
@@ -76,7 +73,7 @@ class Round:
     get_round_flag = classmethod(get_round_flag_cls)
 
     def last_round_index_in_table_cls(cls, tournament_id):
-        '''returns length of round list in a tournament'''
+        """returns length of round list in a tournament"""
         tournament_in_table = table_tournaments.get(doc_id=int(tournament_id))
         last_round_index = len(tournament_in_table['rounds'])
         return last_round_index
@@ -84,7 +81,7 @@ class Round:
     last_round_index_in_table = classmethod(last_round_index_in_table_cls)
 
     def create_empty_new_round_in_tournament_cls(cls, tournament_id):
-        '''returns an empty new round for a given tournament'''
+        """returns an empty new round for a given tournament"""
         last_round = Round.last_round_index_in_table(tournament_id)
         new_round_number = int(last_round) + 1
         round_number = str(new_round_number)

@@ -6,7 +6,7 @@ class Match:
     def __init__(self, result):
         self.result = result
 
-    def serialize_match(self) -> object:
+    def serialize_match(self):
         """returns from a match object a serialized match as a dictionary"""
         player_white_id = (self.result[0][0]).get_player_id()
         score_white = self.result[0][1]

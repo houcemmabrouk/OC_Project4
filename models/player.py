@@ -5,6 +5,7 @@ db = TinyDB('db.json')
 table_players = db.table("players")
 table_tournaments = db.table("tournaments")
 
+
 class Player:
 
     def __init__(self, first_name, last_name, date_of_birth, sex, ranking, tournament_score):
@@ -14,44 +15,41 @@ class Player:
         self.sex = sex
         self.ranking = ranking
         self.tournament_score = tournament_score
-        db = TinyDB('db.json')
-        self.table_players = db.table("players")
-        self.table_tournaments = db.table("tournaments")
         self.players: List[Player] = []
 
     def update_ranking(self, new_value):
-      '''updates object attribute'''
-      self.ranking = new_value
+        """updates object attribute"""
+        self.ranking = new_value
 
     def serialize_player(self):
         serialized_player = {
-                            'first_name': self.first_name,
-                            'last_name': self.last_name,
-                            'date_of_birth': self.date_of_birth,
-                            'sex': self.sex,
-                            'ranking': self.ranking,
-                            'tournament_score': self.tournament_score
-                            }
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'date_of_birth': self.date_of_birth,
+            'sex': self.sex,
+            'ranking': self.ranking,
+            'tournament_score': self.tournament_score
+        }
         return serialized_player
 
     def deserialize_player(self, serialized_player):
         player = Player(
-                        first_name=serialized_player['first_name'],
-                        last_name=serialized_player['last_name'],
-                        date_of_birth=serialized_player['date_of_birth'],
-                        sex=serialized_player['sex'],
-                        ranking=serialized_player['ranking'],
-                        tournament_score=serialized_player['tournament_score']
-                        )
+            first_name=serialized_player['first_name'],
+            last_name=serialized_player['last_name'],
+            date_of_birth=serialized_player['date_of_birth'],
+            sex=serialized_player['sex'],
+            ranking=serialized_player['ranking'],
+            tournament_score=serialized_player['tournament_score']
+        )
         return player
 
     def get_player_id(self):
-        '''Search for player id in the database'''
+        """Search for player id in the database"""
         User = Query()
         serialized_player = self.serialize_player()
-        documents = self.table_players.search(User.first_name == str(serialized_player['first_name']) and
-                                              User.last_name == str(serialized_player['last_name']) and
-                                              User.date_of_birth == str(serialized_player['date_of_birth']))
+        documents = table_players.search(User.first_name == str(serialized_player['first_name']) and
+                                         User.last_name == str(serialized_player['last_name']) and
+                                         User.date_of_birth == str(serialized_player['date_of_birth']))
         id_player = None
         for document in documents:
             id_player = document.doc_id
@@ -68,20 +66,20 @@ class Player:
 
     def save(self):
         serialized_player = self.serialize_player()
-        self.table_players.insert(serialized_player)
+        table_players.insert(serialized_player)
 
     def get_player_from_id_cls(cls, player_id):
         """returns player object from an id. The id can be either string or integer"""
         for player_in_table in table_players:
             if str(player_id) == str(player_in_table.doc_id):
                 player = Player(
-                                player_in_table['first_name'],
-                                player_in_table['last_name'],
-                                player_in_table['date_of_birth'],
-                                player_in_table['sex'],
-                                player_in_table['ranking'],
-                                player_in_table['tournament_score']
-                                )
+                    player_in_table['first_name'],
+                    player_in_table['last_name'],
+                    player_in_table['date_of_birth'],
+                    player_in_table['sex'],
+                    player_in_table['ranking'],
+                    player_in_table['tournament_score']
+                )
                 return player
 
     get_player_from_id = classmethod(get_player_from_id_cls)
@@ -113,7 +111,7 @@ class Player:
     def number_of_players_in_db_cls(cls):
         number_of_players = 0
         for player in table_players:
-            if player.doc_id != None:
+            if player.doc_id is not None:
                 number_of_players += 1
         return number_of_players
 
