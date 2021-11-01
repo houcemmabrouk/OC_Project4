@@ -40,3 +40,18 @@ class Match:
         return match
 
     deserialize_match = classmethod(deserialize_match_cls)
+
+    @staticmethod
+    def translate_match_results(entry):
+        score1 = 0
+        score2 = 0
+        if entry == str(1):
+            score1 = 1
+            score2 = 0
+        elif entry == str(2):
+            score1 = 0
+            score2 = 1
+        elif entry == "X":
+            score1 = 0.5
+            score2 = 0.5
+        return [score1, score2]

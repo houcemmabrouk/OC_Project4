@@ -123,3 +123,23 @@ class Player:
         return players
 
     get_players_from_tournament_id = classmethod(get_players_from_tournament_id_cls)
+
+    @staticmethod
+    def is_table_players_empty():
+        if len(table_players.all()) == 0:
+            return True
+
+    @staticmethod
+    def aggregate_player_score(player_id, tournament_id):
+        player_score = 0.0
+        for tournament_in_table in table_tournaments:
+            if str(tournament_id) == str(tournament_in_table.doc_id):
+                rounds_in_table = tournament_in_table['rounds']
+                for round_in_table in rounds_in_table:
+                    matchs_in_table = round_in_table['round_matchs']
+                    for match_in_table in matchs_in_table:
+                        if str(match_in_table['result'][0][0]) == player_id:
+                            player_score += match_in_table['result'][0][1]
+                        if str(match_in_table['result'][1][0]) == player_id:
+                            player_score += match_in_table['result'][1][1]
+        return player_score

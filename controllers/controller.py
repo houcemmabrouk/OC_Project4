@@ -19,10 +19,8 @@ class Controller:
         # self.table_players.truncate()
         # self.table_tournaments.truncate()
 
-    def test(self):
-        print(Tournament.get_tournament_from_id("1"))
-
     """Player"""
+
     def get_player_info(self):
         player_info = self.view.prompt_player_info()
         return player_info
@@ -32,15 +30,20 @@ class Controller:
         Player.get_new_player(player_info).save()
 
     def update_player_ranking(self):
-        self.view.display_players([])
-        player_id = self.view.prompt_player_id_for_update()
-        new_ranking = self.view.prompt_input_new_ranking()
-        for player in self.table_players:
-            if str(player.doc_id) == str(player_id):
-                self.table_players.update({"ranking": str(new_ranking)}, doc_ids=[player.doc_id])
-                self.view.prompt_modification_success()
+        if not Tournament.is_table_tournaments_empty():
+            self.view.display_players([])
+            player_id = self.view.prompt_player_id_for_update()
+            new_ranking = self.view.prompt_input_new_ranking()
+            for player in self.table_players:
+                if str(player.doc_id) == str(player_id):
+                    self.table_players.update({"ranking": str(new_ranking)}, doc_ids=[player.doc_id])
+                    self.view.prompt_modification_success()
+        else:
+            self.view.prompt_alert_table_player_emty()
+            self.display_sub_menu("1")
 
     """Tournament"""
+
     def create_new_tournament(self):
         DB_HAS_AT_LEAST_8_PLAYERS = Player.number_of_players_in_db() >= 8
         if DB_HAS_AT_LEAST_8_PLAYERS:
@@ -59,20 +62,13 @@ class Controller:
         players_in_tournament = []
         i = 1
         while i < 9:
-            self.view.display_players_not_in_tournament(players_in_tournament)
+            self.view.display_players(players_in_tournament)
             player_id = self.view.prompt_add_player_id_to_tournament(i)
             if Player.check_player_id(player_id) and player_id not in players_in_tournament:
                 i += 1
                 players_ids.append(player_id)
                 players_in_tournament.append(player_id)
         return players_ids
-
-    def is_tournaments_table_empty(self):
-        for tournament_in_table in self.table_tournaments:
-            if len(tournament_in_table) is None:
-                return True
-            else:
-                return False
 
     def add_new_empty_round_to_tournament(self, tournament_id):
         serialized_new_round = Round.serialize_round(Round.create_empty_new_round_in_tournament(tournament_id))
@@ -81,11 +77,7 @@ class Controller:
     def has_first_round_started(self, tournament_id):
         tournament_in_table = self.table_tournaments.get(doc_id=int(tournament_id))
         rounds_in_table = tournament_in_table['rounds']
-        latest_round = len(rounds_in_table)
-        if latest_round > 0:
-            return True
-        elif latest_round == 0:
-            return False
+        return len(rounds_in_table) > 0
 
     def is_last_round_finished(self, tournament_id):
         """function returns 1 if a round needs to be created and 0 if the last round needs to be created"""
@@ -131,16 +123,16 @@ class Controller:
         Round.update_round_in_table(tournament_id, new_round)
 
     def generate_first_round_matchs(self, players):
-        self.ranked_players = sorted(players, key=lambda x: x.ranking, reverse=True)
-        number_of_players = len(self.ranked_players)
+        ranked_players = sorted(players, key=lambda x: x.ranking, reverse=True)
+        number_of_players = len(ranked_players)
         i = 0
         round_matchs = []
         while 2 * i < number_of_players:
             index1 = i
             index2 = (i + int(number_of_players / 2))
-            result = self.view.prompt_input_match_result(self.ranked_players[index1], self.ranked_players[index2])
-            player_white_result = [self.ranked_players[index1], self.translate_results(result)[0]]
-            player_black_result = [self.ranked_players[index2], self.translate_results(result)[1]]
+            result = self.view.prompt_input_match_result(ranked_players[index1], ranked_players[index2])
+            player_white_result = [ranked_players[index1], Match.translate_match_results(result)[0]]
+            player_black_result = [ranked_players[index2], Match.translate_match_results(result)[1]]
             match_result = (player_white_result, player_black_result)
             match = Match(match_result)
             round_matchs.append(match)
@@ -162,44 +154,45 @@ class Controller:
             self.flag_tournament_finished(tournament_id)
 
     def generate_other_round_matchs(self, players, tournament_id):
-        # updated_players = self.update_player_aggregate_score(players, tournament_id)
-        self.ranked_players = sorted(players, key=lambda x: (self.aggregate_player_score(x.get_player_id(), tournament_id), x.ranking), reverse=True)
-        number_of_players = len(self.ranked_players)
+        ranked_players = sorted(
+            players, key=lambda x: (
+                Player.aggregate_player_score(str(x.get_player_id()), tournament_id), x.ranking), reverse=True)
+        self.view.display_players_ranking_in_tournament(ranked_players, tournament_id)
+        number_of_players = len(ranked_players)
         i = 0
         round_matchs = []
         while i < number_of_players:
             index1 = i
             index2 = (i + 1)
-            result = self.view.prompt_input_match_result(self.ranked_players[index1], self.ranked_players[index2])
-            player_white_result = [self.ranked_players[index1], self.translate_results(result)[0]]
-            player_black_result = [self.ranked_players[index2], self.translate_results(result)[1]]
+            result = self.view.prompt_input_match_result(ranked_players[index1], ranked_players[index2])
+            player_white_result = [ranked_players[index1], Match.translate_match_results(result)[0]]
+            player_black_result = [ranked_players[index2], Match.translate_match_results(result)[1]]
             match_result = (player_white_result, player_black_result)
             match = Match(match_result)
             round_matchs.append(match)
             i += 2
         return round_matchs
 
-    # 4. Lorsque le tour est terminé, entrez les résultats.
     def input_results(self):
         MAX_ROUNDS = 4
-        # check there is tournament
+        if Tournament.is_table_tournaments_empty():
+            self.view.prompt_alert_table_tournaments_empty()
+            exit()
         self.view.display_all_tournaments()
         tournament_id = self.view.prompt_choose_tournament_id()
-        self.view.display_rounds_from_tournament_id(tournament_id)
-
+        self.view.display_tournament_rounds(tournament_id)
         if self.is_tournament_over(tournament_id) is False:
             if self.do_i_need_a_new_round(tournament_id):
                 new_round = Round.create_empty_new_round_in_tournament(tournament_id)
                 Round.append_round_in_table(tournament_id, new_round)
-
             round_number = self.what_is_latest_round(tournament_id)
-
             if round_number == 1:
                 self.generate_first_round(tournament_id, round_number)
             elif 1 < round_number <= MAX_ROUNDS:
                 self.generate_other_round(tournament_id, round_number)
             else:
-                print("ROUND ERROR")
+                self.view.prompt_alert_round_input()
+                self.display_sub_menu("2")
         else:
             self.view.prompt_alert_round_input()
             self.display_sub_menu("2")
@@ -207,27 +200,6 @@ class Controller:
     def timestamp(self):
         timestamp = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         return timestamp
-
-    def aggregate_player_score(self, player_id, tournament_id):
-        player_score = 0.0
-        for tournament_in_table in self.table_tournaments:
-            if str(tournament_id) == str(tournament_in_table.doc_id):
-                rounds_in_table = tournament_in_table['rounds']
-                for round_in_table in rounds_in_table:
-                    matchs_in_table = round_in_table['round_matchs']
-                    for match_in_table in matchs_in_table:
-                        if str(match_in_table['result'][0][0]) == player_id:
-                            player_score += match_in_table['result'][0][1]
-                        if match_in_table['result'][1][0] == player_id:
-                            player_score += match_in_table['result'][0][1]
-        return player_score
-
-    def update_player_aggregate_score(self, players, tournament_id):
-        updated_players = []
-        for player in players:
-            player.tournament_score = self.aggregate_player_score(player.get_player_id(), tournament_id)
-            updated_players.append(player)
-        return updated_players
 
     def has_player_played_against(self, player_id, opponent_id, tournament_id):
         tournament = self.table_tournaments.get(doc_id=int(tournament_id))
@@ -238,27 +210,12 @@ class Controller:
             tournament_matchs = round_in_table['round_matchs']
             for match_in_table in tournament_matchs:
                 matchs.append(match_in_table)
-
         for match in matchs:
             if str(player_id) == str(match['result'][0][0]) or str(player_id) == str(match['result'][1][0]):
                 if str(opponent_id) == match['result'][1][0] or str(player_id) == str(match['result'][1][0]):
                     response = True
 
                 return response
-
-    def translate_results(self, entry):
-        score1 = 0
-        score2 = 0
-        if entry == str(1):
-            score1 = 1
-            score2 = 0
-        elif entry == str(2):
-            score1 = 0
-            score2 = 1
-        elif entry == "x":
-            score1 = 0.5
-            score2 = 0.5
-        return [score1, score2]
 
     def flag_tournament_finished(self, tournament_id):
         for tournament_in_table in self.table_tournaments:
@@ -332,8 +289,7 @@ class Controller:
         elif index == str(6):
             self.view.display_all_tournaments()
             tournament_id = self.view.prompt_choose_tournament_id()
-            '''self.view.display_rounds_from_tournament_id(tournament_id)'''
-            tournament_id = self.view.display_tournament_rounds(tournament_id)
+            self.view.display_tournament_rounds(tournament_id)
         elif index == str(7):
             self.view.display_tournament_matchs()
         elif index == str(8):

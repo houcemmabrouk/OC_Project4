@@ -2,8 +2,8 @@ import datetime
 
 
 def ask_integer(min_value, max_value, prompt):
-    """fonction qui a pour but de demander a l'utilisateur de rentrer une valeur entiere comprise
-    entre min_value et max_value et de reiterer cette demande pour chaque saisie erronée"""
+    """This function aims to control an input of an integer bounded by min_value and max_value besides the function
+     takes as an argument the prompt meant to be displayed"""
     while True:
         try:
             value = int(input(prompt))
@@ -14,8 +14,8 @@ def ask_integer(min_value, max_value, prompt):
 
 
 def ask_string(min_length, max_length, prompt):
-    """fonction qui a pour but de demander a l'utilisateur de rentrer une valeur entiere comprise
-    entre min_value et max_value et de reiterer cette demande pour chaque saisie erronée"""
+    """This function aims to control an input of a string with a minimum number of characters min_length and a maximum
+    number of characters max_length besides the function takes as an argument the prompt meant to be displayed"""
     while True:
         try:
             value = input(prompt)
@@ -26,19 +26,20 @@ def ask_string(min_length, max_length, prompt):
 
 
 def ask_choice(choices, prompt):
-    """fonction qui a pour but de demander a l'utilisateur de rentrer une valeur entiere comprise
-    entre min_value et max_value et de reiterer cette demande pour chaque saisie erronée"""
+    """This function aims to control an input of a choice from a list of choices the function takes as an argument
+     the prompt meant to be displayed"""
     print(prompt)
     while True:
         try:
             value = input("Enter Your Choice : ")
-            if value.capitalize() in choices:
+            if value.upper() in choices:
                 return value.capitalize()
         except ValueError:
             pass
 
 
 def ask_date(min_date, max_date, prompt):
+    """This function aims to control an input of a date from a min_date to a max_date and display a prompt"""
     print(prompt)
     while True:
         try:

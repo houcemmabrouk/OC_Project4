@@ -104,12 +104,7 @@ class Tournament:
 
     get_tournament_last_round_number = classmethod(get_tournament_last_round_number_cls)
 
-    def save(self):
-        serialized_tournament = self.serialize_tournament()
-        table_tournaments.insert(serialized_tournament)
-
-    def add_completed_round(self, completed_round):
-        self.rounds.append(completed_round)
-
-    def last_round(self):
-        print("last round")
+    @staticmethod
+    def is_table_tournaments_empty():
+        if len(table_tournaments.all()) == 0:
+            return True
